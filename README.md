@@ -2,7 +2,7 @@
 
 Plan → execute → archive any multi-step task inside Claude Code. File processing, data migration, research, content creation — anything that takes more than one step and is worth remembering later.
 
-Not a code framework. No dependencies, no config, no CLI. Four slash commands and a directory of markdown files.
+Not a code framework. No dependencies, no config, no CLI. Six slash commands and a directory of markdown files.
 
 ## Why this exists
 
@@ -55,7 +55,8 @@ This gives you a persistent workflow for everything else:
 
 /task:list
 
-  Shows all active tasks with progress, and recently archived ones.
+  Lists all active tasks with goals and progress.
+  Shows the 10 most recently archived tasks with outcomes.
 ```
 
 ## Artifacts
