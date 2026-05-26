@@ -4,7 +4,7 @@ description: Plan a new task with all artifacts generated in one step. Use when 
 compatibility: Requires Claude Code (no external dependencies).
 metadata:
   author: custom
-  version: "1.0"
+  version: "1.1"
 ---
 
 Plan a new task - create the task directory and generate all planning artifacts in one step. Can also re-plan an existing task to update its artifacts.
@@ -128,9 +128,19 @@ When ready to execute, run /task:do
    - Use `- [ ]` checkbox format for progress tracking
    - Order matters: put dependent tasks after their prerequisites
    - Verification tasks confirm success, not redo the work
-   - Aim for 3-15 tasks: too few means under-planned, too many means micro-managing
+   - Aim for 3-15 top-level tasks: too few means under-planned, too many means micro-managing
+   - Sub-tasks may be indented under a top-level item, but they do NOT count toward the task total
 
-7. **Show summary**
+7. **Verify all artifacts**
+
+   Use Bash to confirm each file was written successfully:
+   ```bash
+   ls tasks/<name>/proposal.md tasks/<name>/design.md tasks/<name>/tasks.md
+   ```
+
+   If any file is missing, recreate it before proceeding.
+
+8. **Show summary**
 
    ```
    ## Task Planned: <task-name>

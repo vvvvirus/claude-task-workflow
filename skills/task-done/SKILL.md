@@ -4,7 +4,7 @@ description: Archive a completed task. Use when the user wants to finalize and a
 compatibility: Requires Claude Code (no external dependencies).
 metadata:
   author: custom
-  version: "1.0"
+  version: "1.1"
 ---
 
 Archive a completed task.
@@ -13,11 +13,12 @@ Archive a completed task.
 
 **Steps**
 
-1. **If no task name provided, prompt for selection**
+1. **Select the task**
 
-   List directories in `tasks/` (excluding `archive/`). Use the **AskUserQuestion tool** to let the user select.
-
-   **IMPORTANT**: Do NOT guess or auto-select a task. Always let the user choose.
+   If a name is provided, use it. Otherwise:
+   - Infer from conversation context if the user mentioned a task
+   - Auto-select if only one active task exists
+   - If ambiguous, list available tasks from `tasks/` directory and use the **AskUserQuestion tool** to let the user select
 
 2. **Check task completion status**
 
@@ -40,6 +41,7 @@ Archive a completed task.
    ```markdown
 
    ---
+   <!-- COMPLETION -->
 
    ## Completion Summary
    - **Completed:** YYYY-MM-DD
@@ -55,14 +57,15 @@ Archive a completed task.
    mkdir -p tasks/archive
    ```
 
-   Generate target name: `YYYY-MM-DD-<task-name>`
+   Generate base target name: `YYYY-MM-DD-<task-name>`
 
    **Check if target already exists:**
-   - If yes: fail with error, suggest renaming existing archive or using different approach
-   - If no: move the task directory
+   - If yes: append a numeric suffix (`-2`, `-3`, etc.) until a unique name is found
+   - If no: use the base name
 
    ```bash
    mv tasks/<name> tasks/archive/YYYY-MM-DD-<name>
+   # or tasks/archive/YYYY-MM-DD-<name>-2 if collision occurred
    ```
 
 5. **Display summary**
@@ -85,7 +88,7 @@ All N tasks complete.
 ## Archive Complete (with warnings)
 
 **Task:** <task-name>
-**Archived to:** tasks/archive/YYYY-MM-DD-<name>/
+**Archived to:** tasks/archive/<actual-archive-name>/
 
 **Warnings:**
 - Archived with N incomplete tasks:
@@ -93,22 +96,6 @@ All N tasks complete.
   ...
 
 Review the archive if this was not intentional.
-```
-
-**Output On Error (Archive Exists)**
-
-```
-## Archive Failed
-
-**Task:** <task-name>
-**Target:** tasks/archive/YYYY-MM-DD-<name>/
-
-Target archive directory already exists.
-
-**Options:**
-1. Rename the existing archive
-2. Delete the existing archive if it's a duplicate
-3. Use a different approach
 ```
 
 **Guardrails**

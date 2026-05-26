@@ -4,7 +4,7 @@ description: Record a checkpoint to a task's execution log. Use whenever the use
 compatibility: Requires Claude Code (no external dependencies).
 metadata:
   author: custom
-  version: "1.0"
+  version: "1.1"
 ---
 
 Append an auto-generated checkpoint to a task's log.md, with optional user notes. The checkpoint automatically captures progress, completed work, pending items, and any plan changes or blockers — no need for the user to manually summarize.
@@ -24,17 +24,16 @@ Append an auto-generated checkpoint to a task's log.md, with optional user notes
    Read every context file to build the checkpoint:
    - `tasks/<name>/proposal.md` — for goal and scope
    - `tasks/<name>/design.md` — for strategy context
-   - `tasks/<name>/tasks.md` — for checkbox progress (parse all `- [x]` and `- [ ]` lines)
+   - `tasks/<name>/tasks.md` — for checkbox progress (parse top-level `- [x]` and `- [ ]` lines only; ignore indented sub-tasks)
    - `tasks/<name>/log.md` — for prior session and checkpoint history (if exists)
 
 3. **Auto-detect key changes since last checkpoint**
 
    Compare current state against the most recent log.md entry (if any):
 
-   - **Progress delta**: which tasks went from `- [ ]` to `- [x]` since the last checkpoint
-   - **Plan changes**: whether proposal.md or design.md were modified in this session (check file modification timestamps, or compare with the task descriptions in the last log entry)
+   - **Progress delta**: which top-level tasks went from `- [ ]` to `- [x]` since the last checkpoint (compare current tasks.md against the completed task descriptions mentioned in the last log entry)
+   - **Plan changes**: compare the current content of proposal.md and design.md with any descriptions captured in the last log entry; if they differ, note the change
    - **Unresolved blockers**: if the last log entry mentions a blocker that's still not resolved (relevant pending tasks still not completable)
-   - **Deviations**: tasks completed but not exactly as originally described
 
    If no prior log.md exists, treat all completed tasks as "this session."
 

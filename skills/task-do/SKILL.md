@@ -4,7 +4,7 @@ description: Execute tasks from a planned task. Use when the user wants to start
 compatibility: Requires Claude Code (no external dependencies).
 metadata:
   author: custom
-  version: "1.0"
+  version: "1.1"
 ---
 
 Execute tasks from a planned task.
@@ -38,12 +38,14 @@ Execute tasks from a planned task.
 
 4. **Show current progress and session history**
 
-   Parse tasks.md to count:
-   - Total tasks (all `- [ ]` and `- [x]` lines)
-   - Completed tasks (`- [x]`)
-   - Pending tasks (`- [ ]`)
+   Parse tasks.md to count **top-level** checkboxes only (lines starting with `- [ ]` or `- [x]`, ignoring indented sub-items):
+   - Total tasks (top-level `- [ ]` and `- [x]` lines)
+   - Completed tasks (top-level `- [x]`)
+   - Pending tasks (top-level `- [ ]`)
 
-   If `log.md` exists, read the last session entry (after the last `---` separator) and show a brief summary so the user knows where things left off.
+   Record the current completed count as `session_start_completed = N`.
+
+   If `log.md` exists, read the last session entry (search backward for `## Session:` or `## Checkpoint:`) and show a brief summary so the user knows where things left off.
 
    Display:
    ```
@@ -67,6 +69,7 @@ Execute tasks from a planned task.
    ---
    ## Session: YYYY-MM-DD HH:MM
    **Starting progress:** N/M tasks complete
+   **Session start completed count:** N
    **Pending tasks:**
    - <task description>
    - <task description>
@@ -85,12 +88,14 @@ Execute tasks from a planned task.
 
 6. **Execute tasks (loop until done or blocked)**
 
-   For each pending task:
+   For each pending task (top-level `- [ ]` items only):
    - Announce: "Working on task N/M: <task description>"
-   - Execute the task using the appropriate tools (Bash, Write, Edit, browser, etc.)
-   - After completing the task, immediately mark it done: `- [ ]` → `- [x]` in tasks.md
+   - Before executing, review `design.md` for relevant **Strategy** and **Key Decisions** that apply to this task
+   - Execute the task using the appropriate tools (Bash, Write, Edit, browser, etc.), guided by the design strategy
+   - After successfully completing the task, immediately mark it done: `- [ ]` → `- [x]` in tasks.md
    - Show brief confirmation: "✓ Task complete"
    - Continue to next task
+   - If a task fails or cannot be completed, do NOT mark it done — report the error and pause
 
    **Pause if:**
    - Task is unclear or ambiguous → STOP and ask for clarification. Do NOT reinterpret, guess, or assume what the task means. Present the ambiguity and ask the user to resolve it.
@@ -104,6 +109,8 @@ Execute tasks from a planned task.
    Claude cannot detect when the user closes the conversation — there is no OS-level "session end" event. Only write to log.md automatically when tasks are naturally complete or a blocker forces a pause. In all other cases, prompt the user to manually checkpoint.
 
    **a. All tasks complete → auto-write completion to log.md:**
+
+   Calculate `tasks_completed_this_session = current_completed - session_start_completed`.
 
    Append:
    ```markdown
@@ -120,6 +127,8 @@ Execute tasks from a planned task.
 
    **b. Blocked by error/unresolvable issue → auto-write pause to log.md:**
 
+   Calculate `tasks_completed_this_session = current_completed - session_start_completed`.
+
    Append:
    ```markdown
    ## Session end: YYYY-MM-DD HH:MM
@@ -133,7 +142,7 @@ Execute tasks from a planned task.
 
    Then display pause output with options.
 
-   **c. All other pauses (user said "stop", task unclear, switching tasks, end of conversation):**
+   **c. All other pauses (user said "stop", switching tasks, end of conversation):**
 
    Do NOT auto-write. Display status and prompt:
    > "To checkpoint your progress, run `/task:log <name>` to record what was done and what's next."

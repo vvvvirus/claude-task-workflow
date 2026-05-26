@@ -4,7 +4,7 @@ description: Revise an existing task plan without regenerating from scratch. Use
 compatibility: Requires Claude Code (no external dependencies).
 metadata:
   author: custom
-  version: "1.0"
+  version: "1.1"
 ---
 
 Revise an existing task plan by editing only what changed. Does NOT regenerate all artifacts from scratch — reads the current state, asks what needs to change, and surgically edits the relevant files.
@@ -34,7 +34,7 @@ Revise an existing task plan by editing only what changed. Does NOT regenerate a
    ## Re-plan: <task-name>
 
    **Current goal:** <from proposal.md>
-   **Progress:** N/M tasks complete (preserved)
+   **Progress:** N/M top-level tasks complete (preserved)
    **Scope:** <in-scope summary>
 
    ### Current tasks
@@ -60,7 +60,8 @@ Revise an existing task plan by editing only what changed. Does NOT regenerate a
 
    Editing rules:
    - Modify ONLY the sections relevant to the change. Leave everything else verbatim.
-   - If changing `tasks.md`: preserve checkbox states for tasks that are NOT being modified. Only reset `[x]` → `[ ]` if the task description itself changed.
+   - If changing `tasks.md`: preserve checkbox states for tasks that are NOT being modified.
+   - **When to reset `[x]` → `[ ]`**: apply this mechanically — if the rewritten task's **core action** (the main verb + object, e.g., "rename files", "run migration") differs from the original, reset it. If only details, constraints, or ordering changed while the core action stays the same, keep `[x]`.
    - If a completed task's meaning changed significantly, flag it: "Task X was done, but the description changed — may need re-doing."
    - If adding new tasks, insert them in the correct dependency order among existing tasks.
    - Do NOT rewrite the entire file. Use targeted edits.

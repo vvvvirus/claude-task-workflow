@@ -15,12 +15,13 @@ Write-Host "Installing Claude Task Workflow..."
 New-Item -ItemType Directory -Force -Path "$ClaudeDir\skills" | Out-Null
 New-Item -ItemType Directory -Force -Path "$ClaudeDir\commands\task" | Out-Null
 
-# Copy skills
+# Copy skills (-Recurse copies entire directories; -Force overwrites existing)
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-plan" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-do" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-done" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-log" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-replan" "$ClaudeDir\skills\"
+Copy-Item -Recurse -Force "$ScriptDir\skills\task-list" "$ClaudeDir\skills\"
 
 # Copy commands
 Copy-Item -Force "$ScriptDir\commands\task\*.md" "$ClaudeDir\commands\task\"

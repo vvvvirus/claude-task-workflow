@@ -9,38 +9,10 @@ List all tasks - active and archived.
 
 **Steps**
 
-1. **List active tasks**
+Use the **Skill tool** to invoke `task-list`.
 
-   Check `tasks/` directory (excluding `archive/` subdirectory):
-   ```bash
-   ls -d tasks/*/ 2>/dev/null | grep -v archive
-   ```
-
-   For each active task, read its proposal.md and parse the goal line. Show progress from tasks.md.
-
-2. **List recently archived tasks**
-
-   Check `tasks/archive/` directory:
-   ```bash
-   ls -d tasks/archive/*/ 2>/dev/null | tail -10
-   ```
-
-3. **Display summary**
-
-```
-## Active Tasks
-
-| Task | Goal | Progress |
-|------|------|----------|
-| <name> | <goal from proposal.md> | N/M done |
-
-## Recently Archived
-
-| Task | Archived | Result |
-|------|----------|--------|
-| <name> | <date> | <result from completion summary> |
-
----
-Run `/task:plan <description>` to start a new task.
-Run `/task:do <name>` to execute an active task.
-```
+The skill will:
+1. Scan `tasks/` (excluding `archive/`) for active tasks
+2. Read each task's proposal.md and tasks.md to show goal and progress
+3. Scan `tasks/archive/` for recently archived tasks
+4. Display a formatted summary table
