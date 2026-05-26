@@ -21,6 +21,7 @@ cp -r "$SCRIPT_DIR/skills/task-plan" "$CLAUDE_DIR/skills/"
 cp -r "$SCRIPT_DIR/skills/task-do" "$CLAUDE_DIR/skills/"
 cp -r "$SCRIPT_DIR/skills/task-done" "$CLAUDE_DIR/skills/"
 cp -r "$SCRIPT_DIR/skills/task-log" "$CLAUDE_DIR/skills/"
+cp -r "$SCRIPT_DIR/skills/task-replan" "$CLAUDE_DIR/skills/"
 
 # Copy commands
 cp "$SCRIPT_DIR/commands/task/"*.md "$CLAUDE_DIR/commands/task/"

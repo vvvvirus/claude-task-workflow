@@ -42,6 +42,12 @@ This gives you a persistent workflow for everything else:
     → Unresolved blockers
   Asks if you want to add freeform notes. Can accept as-is.
 
+/task:replan organize-photos
+
+  Edits the plan without starting over.
+  Asks what to change, surgically updates only the relevant files.
+  Preserves completed checkboxes and session history.
+
 /task:done organize-photos
 
   Appends completion summary to proposal.md.
@@ -63,17 +69,17 @@ This gives you a persistent workflow for everything else:
 
 ## Re-planning
 
-Already started but the approach isn't working?
+Already started but need to change direction?
 
 ```
-/task:plan organize-photos
-  → "This task exists. Options:"
-     1. Update plan — regenerates artifacts, preserves log.md
-     2. Continue with /task:do — resume existing plan
-     3. Create with different name — start fresh
+/task:replan organize-photos
+  → Shows current state
+  → Asks: "What needs to change?"
+  → Surgically edits only the relevant files
+  → Preserves completed tasks and session history
 ```
 
-Pick "Update plan" to revise proposal, design, and tasks while keeping all session history intact.
+Also works with inline input: `/task:replan organize-photos "narrow scope to PDF only, skip images"`
 
 ## Design decisions
 

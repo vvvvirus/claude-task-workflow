@@ -34,11 +34,11 @@ When ready to execute, run /task:do
 2. **Check for existing task with same name**
 
    Check if `tasks/<name>/` already exists.
-   - If yes: use the **AskUserQuestion tool** to present three options:
-     1. "Update plan" — re-generate proposal.md, design.md, tasks.md (preserves log.md and prior session history)
-     2. "Continue with /task:do" — keep existing plan and start/resume execution
-     3. "Create with different name" — keep existing task, plan a new one
-   - If updating: read existing artifacts and log.md first to understand current state before re-generating
+   - If yes: tell the user this task exists. Offer two options:
+     1. **Continue** — run `/task:do <name>` to resume execution
+     2. **Revise** — run `/task:replan <name>` to edit the plan (preserves progress and history)
+     3. **New name** — pick a different name and proceed with fresh planning
+   - Do NOT regenerate artifacts from `/task:plan` itself. Editing belongs in `/task:replan`.
    - If no: proceed
 
 3. **Create the task directory**
