@@ -100,7 +100,7 @@ No separate `/task:replan` command needed. Git handles rollback if the change wa
 
 **Artifacts are just markdown.** No YAML config, no JSON schema, no database. You can read, edit, or delete them with any text editor. The skills parse checkbox syntax (`- [ ]` / `- [x]`) and `##` headings. That's it.
 
-**Language separation.** Public files (README, skills, commands, runtime.ts, CLAUDE.md) are written in English. Plan files (proposal.md, design.md, tasks.md, log.md) are written in Chinese. This is enforced by `CLAUDE.md` at the project root.
+**Language separation.** Public files (README, skills, commands, runtime.ts, CLAUDE.md) are written in English. Plan files (proposal.md, design.md, tasks.md, log.md) are written in user's language. This is enforced by `CLAUDE.md` at the project root.
 
 ## Project structure
 
