@@ -39,7 +39,7 @@ Execute tasks from a planned task. Uses workflow-runtime.ts for deterministic DA
 4. **Load runtime state**
 
    Run `npx tsx workflow-runtime.ts status <name>` to get the machine-verifiable state.
-   - If `runtime/task-state.json` doesn't exist (old task pre-dating runtime), fall back to pure markdown mode: use tasks.md checkbox parsing for progress and inline `(depends on: xxx)` for ordering.
+   - If `runtime/task-state.json` doesn't exist (old task pre-dating runtime), fall back to pure markdown mode: parse tasks.md checkboxes for progress and execute in markdown order (no dependency resolution available; dependencies live in runtime state per task-plan).
    - In runtime mode, all dependency and progress data comes from task-state.json. tasks.md checkboxes are updated for human visibility only.
    - If the runtime returns a `_runnable` result with a `done: true` flag, all tasks are complete — skip to step 7a.
 
@@ -119,16 +119,15 @@ Execute tasks from a planned task. Uses workflow-runtime.ts for deterministic DA
 
    **Pause if:**
    - Task is unclear or ambiguous → STOP and ask for clarification. Do NOT reinterpret, guess, or assume what the task means. Present the ambiguity and ask the user to resolve it.
-   - Execution reveals a design issue → suggest running `/task:replan <name>` to revise the plan
+   - Execution reveals a design issue → suggest running `/task:plan <name>` to revise the plan
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
    - Task requires manual user action → describe what the user needs to do, wait for confirmation
 
    **Fallback (no runtime):** If runtime/task-state.json doesn't exist, use the old markdown-based flow:
-   - Parse tasks.md for `- [ ]` checkboxes
-   - Check inline `(depends on: ...)` syntax
+   - Parse tasks.md for `- [ ]` checkboxes in listed order
    - Execute and mark checkboxes directly
-   - No automatic checkpointing or verification
+   - No dependency resolution, automatic checkpointing, or verification
 
 8. **Run verification**
 
@@ -242,7 +241,7 @@ What would you like to do?
 - ALWAYS read all context files (proposal, design, tasks, log) before starting
 - In runtime mode, ALWAYS use `workflow-runtime.ts next` to determine task order — never parse tasks.md manually for ordering
 - **NO GUESSING**: If a task description is ambiguous, the goal is unclear, or you're uncertain about what the user wants — STOP immediately and use AskUserQuestion to clarify. Never reinterpret vague instructions. Never assume intent.
-- If execution reveals issues, pause and suggest artifact updates (explicitly: `/task:replan <name>`).
+- If execution reveals issues, pause and suggest artifact updates (explicitly: `/task:plan <name>`).
 - Call `step-done` and `checkpoint` immediately after completing each task
 - Write session start entry to log.md BEFORE executing. Auto-write session end only for completion or blockers (step 9); for other pauses, prompt user to run `/task:log`.
 - Log entries should be specific: what was done, what worked, what didn't, what's next

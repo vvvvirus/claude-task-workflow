@@ -20,7 +20,6 @@ Copy-Item -Recurse -Force "$ScriptDir\skills\task-plan" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-do" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-done" "$ClaudeDir\skills\"
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-log" "$ClaudeDir\skills\"
-
 Copy-Item -Recurse -Force "$ScriptDir\skills\task-list" "$ClaudeDir\skills\"
 
 # Copy commands

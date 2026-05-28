@@ -13,6 +13,7 @@ interface SubTask {
 }
 
 interface CheckState {
+  [key: string]: boolean | string | undefined;
   tests?: boolean;
   lint?: boolean;
   typecheck?: boolean;
@@ -118,51 +119,63 @@ function ok(data: Record<string, unknown>): void {
 
 function parseList(arg?: string): string[] {
   if (!arg || arg === "") return [];
-  return arg.split(",").map((s) => s.trim()).filter(Boolean);
+  return [...new Set(arg.split(",").map((s) => s.trim()).filter(Boolean))];
 }
 
 function detectVerifyCommands(): VerifyCommand[] {
   const cwd = PROJECT_ROOT;
   const cmds: VerifyCommand[] = [];
+  const seen = new Set<string>();
+
+  function add(name: string, command: string): void {
+    if (seen.has(name)) return; // first project type wins
+    seen.add(name);
+    cmds.push({ name, command });
+  }
 
   if (existsSync(join(cwd, "package.json"))) {
-    const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
-    const scripts = pkg.scripts || {};
-    if (scripts.test) cmds.push({ name: "tests", command: "npm test" });
-    if (scripts.lint) cmds.push({ name: "lint", command: "npm run lint" });
-    if (scripts.typecheck || scripts.tsc) {
-      cmds.push({ name: "typecheck", command: `npm run ${scripts.typecheck ? "typecheck" : "tsc"}` });
+    try {
+      const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
+      const scripts = pkg.scripts || {};
+      if (scripts.test) add("tests", "npm test");
+      if (scripts.lint) add("lint", "npm run lint");
+      if (scripts.typecheck || scripts.tsc) {
+        add("typecheck", `npm run ${scripts.typecheck ? "typecheck" : "tsc"}`);
+      }
+      if (scripts.build) add("build", "npm run build");
+    } catch {
+      console.error(JSON.stringify({ warning: "Failed to parse package.json, skipping JS/TS verify commands" }));
     }
-    if (scripts.build) cmds.push({ name: "build", command: "npm run build" });
   }
 
   if (existsSync(join(cwd, "Cargo.toml"))) {
-    cmds.push({ name: "tests", command: "cargo test" });
-    cmds.push({ name: "lint", command: "cargo clippy" });
-    cmds.push({ name: "typecheck", command: "cargo check" });
+    add("tests", "cargo test");
+    add("lint", "cargo clippy");
+    add("typecheck", "cargo check");
   }
 
   if (existsSync(join(cwd, "pyproject.toml")) || existsSync(join(cwd, "setup.py"))) {
-    cmds.push({ name: "tests", command: "pytest" });
+    add("tests", "pytest");
     if (existsSync(join(cwd, "pyproject.toml"))) {
-      cmds.push({ name: "lint", command: "ruff check ." });
+      add("lint", "ruff check .");
     }
   }
 
   if (existsSync(join(cwd, "go.mod"))) {
-    cmds.push({ name: "tests", command: "go test ./..." });
-    cmds.push({ name: "lint", command: "golangci-lint run" });
-    cmds.push({ name: "typecheck", command: "go vet ./..." });
+    add("tests", "go test ./...");
+    add("lint", "golangci-lint run");
+    add("typecheck", "go vet ./...");
   }
 
   return cmds;
 }
 
 function runVerify(cmd: VerifyCommand): { passed: boolean; output: string } {
+  const timeout = parseInt(process.env.VERIFY_TIMEOUT || "0") || 120_000;
   try {
     const output = execSync(cmd.command, {
       cwd: PROJECT_ROOT,
-      timeout: 120_000,
+      timeout,
       encoding: "utf-8",
       stdio: "pipe",
     });
@@ -206,6 +219,13 @@ function cmdInit(name: string, taskList?: string, deps?: string): void {
   const rtDir = join(dir, "runtime");
   const cpDir = join(rtDir, "checkpoints");
 
+  const existingStatePath = statePath(name);
+  if (existsSync(existingStatePath)) {
+    const bakPath = existingStatePath + ".bak";
+    writeFileSync(bakPath, readFileSync(existingStatePath, "utf-8"));
+    console.error(JSON.stringify({ warning: `Reinitializing task "${name}" — existing state backed up to ${bakPath}` }));
+  }
+
   mkdirSync(dir, { recursive: true });
   mkdirSync(cpDir, { recursive: true });
 
@@ -221,13 +241,30 @@ function cmdInit(name: string, taskList?: string, deps?: string): void {
       const idx = parseInt(entry.slice(0, colon).trim());
       const depStr = entry.slice(colon + 1).trim();
       if (!isNaN(idx)) {
-        depsMap[idx] = depStr.split(",").map((s) => parseInt(s.trim())).filter((n) => !isNaN(n));
+        const parsedDeps = depStr.split(",").map((s) => parseInt(s.trim())).filter((n) => !isNaN(n));
+        if (idx < 0 || idx >= taskDescriptions.length) {
+          console.error(JSON.stringify({ warning: `Dependency entry "${entry}" references out-of-range task index ${idx} (valid: 0-${taskDescriptions.length - 1}), skipped.` }));
+        } else if (parsedDeps.some((n) => n < 0 || n >= taskDescriptions.length)) {
+          const bad = parsedDeps.filter((n) => n < 0 || n >= taskDescriptions.length);
+          console.error(JSON.stringify({ warning: `Dependency entry "${entry}" references out-of-range dependency indices: ${bad.join(",")} (valid: 0-${taskDescriptions.length - 1}), skipping bad deps.` }));
+          depsMap[idx] = parsedDeps.filter((n) => n >= 0 && n < taskDescriptions.length);
+        } else {
+          depsMap[idx] = parsedDeps;
+        }
       }
     }
   }
 
+  const seenIds = new Set<string>();
   const tasks: SubTask[] = taskDescriptions.map((desc, i) => {
-    const id = desc.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    let id = desc.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    // Deduplicate: append suffix for colliding IDs
+    if (seenIds.has(id)) {
+      let suffix = 2;
+      while (seenIds.has(`${id}-${suffix}`)) suffix++;
+      id = `${id}-${suffix}`;
+    }
+    seenIds.add(id);
     const depIndices = depsMap[i] || [];
     const depIds = depIndices.map((di) => {
       const depDesc = taskDescriptions[di];
@@ -262,12 +299,15 @@ function cmdNext(name: string): void {
   const result = getRunnableTask(state);
 
   if (!result) {
+    const inProgress = state.tasks.filter((t) => t.status === "in_progress");
+    const pendingWithDeps = state.tasks.filter((t) => t.status === "pending" && ((t.deps && t.deps.length > 0) || (t.blockedBy && t.blockedBy.length > 0)));
+    if (inProgress.length > 0 && pendingWithDeps.length > 0) {
+      die(`No runnable tasks. ${inProgress.length} task(s) in progress: ${inProgress.map((t) => t.id).join(", ")}. Complete them first.`);
+    }
     die("No runnable tasks found. Possible deadlock — check dependencies.");
   }
 
   if ("done" in result) {
-    state.status = "done";
-    saveState(name, state);
     ok({ done: true, message: "All tasks complete" });
   } else {
     ok({ task: result.task, index: result.index });
@@ -294,7 +334,7 @@ function cmdComplete(name: string): void {
     : "done";
 
   for (const t of state.tasks) {
-    if (t.status === "pending") t.status = "done";
+    if (t.status === "in_progress") t.status = "done";
   }
 
   saveState(name, state);
@@ -335,10 +375,7 @@ function cmdVerify(name: string): void {
   }
 
   state.checks = {
-    tests: checks.tests,
-    lint: checks.lint,
-    typecheck: checks.typecheck,
-    build: checks.build,
+    ...checks,
     lastRun: new Date().toISOString(),
   };
   saveState(name, state);
@@ -350,7 +387,6 @@ function cmdCheckpoint(
   name: string,
   step: string,
   files?: string,
-  passed?: string,
 ): void {
   const state = loadState(name);
   const index = state.lastCheckpoint + 1;
@@ -381,25 +417,25 @@ function cmdCheckpoint(
   ok({ checkpoint: `checkpoint-${index}.json`, index });
 }
 
-function cmdCheckpointList(name: string): void {
+function listCheckpoints(name: string): string[] {
   const cpDir = checkpointDir(name);
-  if (!existsSync(cpDir)) {
-    ok({ checkpoints: [] });
-    return;
-  }
-
-  const files = readdirSync(cpDir)
+  if (!existsSync(cpDir)) return [];
+  return readdirSync(cpDir)
     .filter((f) => f.startsWith("checkpoint-") && f.endsWith(".json"))
     .sort((a, b) => {
       const na = parseInt(a.match(/\d+/)![0]);
       const nb = parseInt(b.match(/\d+/)![0]);
       return nb - na;
     });
+}
 
+function cmdCheckpointList(name: string): void {
+  const files = listCheckpoints(name);
   ok({ checkpoints: files, latest: files[0] || null });
 }
 
 function cmdCheckpointRead(name: string, index: number): void {
+  if (isNaN(index)) die("Checkpoint index must be a valid number.");
   const p = checkpointPath(name, index);
   if (!existsSync(p)) {
     die(`Checkpoint ${index} not found for task "${name}".`);
@@ -439,24 +475,12 @@ function cmdKgQuery(service?: string): void {
 }
 
 function cmdNextCheckpoint(name: string): void {
-  const cpDir = checkpointDir(name);
-  if (!existsSync(cpDir)) {
-    ok({ checkpoint: null, message: "No checkpoints found" });
-    return;
-  }
-
-  const files = readdirSync(cpDir)
-    .filter((f) => f.startsWith("checkpoint-") && f.endsWith(".json"))
-    .sort((a, b) => {
-      const na = parseInt(a.match(/\d+/)![0]);
-      const nb = parseInt(b.match(/\d+/)![0]);
-      return nb - na;
-    });
+  const files = listCheckpoints(name);
 
   if (files.length === 0) {
     ok({ checkpoint: null, message: "No checkpoints found" });
   } else {
-    const latestPath = join(cpDir, files[0]);
+    const latestPath = join(checkpointDir(name), files[0]);
     const cp = JSON.parse(readFileSync(latestPath, "utf-8"));
     ok({ checkpoint: files[0], data: cp });
   }
@@ -492,8 +516,7 @@ function main(): void {
         const name = requireArg(args, 1, "task-name");
         const step = requireArg(args, 2, "step-name");
         const files = args.find((a) => a.startsWith("--files="))?.slice(8);
-        const passed = args.find((a) => a.startsWith("--passed="))?.slice(9);
-        cmdCheckpoint(name, step, files, passed);
+        cmdCheckpoint(name, step, files);
         break;
       }
       case "checkpoints":

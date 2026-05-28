@@ -64,6 +64,11 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```
    This means: task at index 1 depends on task at index 0; task at index 2 depends on task at index 1.
 
+   **Dependency format notes:**
+   - Indices are 0-based and validated at init time — out-of-range indices are skipped with a warning
+   - **Important**: if tasks are reordered, dependency indices must be recalculated. When updating a plan (step 14), always regenerate the `--deps` string from the updated task list
+   - Format each entry as `task-index:dep-index[,dep-index]`, separate entries with spaces
+
    If workflow-runtime.ts is not available, fall back to creating tasks without runtime state and note the limitation.
 
 6. **Create proposal.md**
