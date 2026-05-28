@@ -5,7 +5,7 @@ This is a Claude Code task workflow toolkit — a collection of slash commands a
 ## Language Rules
 
 - **Public files**: English only. This includes README.md, all skill files (`skills/*/SKILL.md`), all command files (`commands/task/*.md`), `workflow-runtime.ts`, `CLAUDE.md`, install scripts, LICENSE, and `.gitignore`.
-- **Plan files**: Chinese. This includes `proposal.md`, `design.md`, `tasks.md`, and `log.md` inside any `tasks/<name>/` directory. These are user-facing task artifacts generated during use of the tool.
+- **Plan files**: In the user's language. This includes `proposal.md`, `design.md`, `tasks.md`, and `log.md` inside any `tasks/<name>/` directory. Section headers in generated plan files should match the language the user communicates in.
 
 ## Code Standards
 

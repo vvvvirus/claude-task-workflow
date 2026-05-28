@@ -46,7 +46,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```markdown
    # Execution Log: <task-name>
 
-   ## 概述
+   ## Overview
    Task created on YYYY-MM-DD.
    ```
 
@@ -78,21 +78,21 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```markdown
    # <Task Title>
 
-   ## 目标
+   ## Goal
    <One sentence describing what success looks like>
 
-   ## 动机
+   ## Motivation
    <Why this needs to be done, what problem it solves>
 
-   ## 范围
+   ## Scope
 
-   ### 包含
+   ### In Scope
    - <what will be done>
 
-   ### 不包含
+   ### Out of Scope
    - <what will NOT be done>
 
-   ## 约束
+   ## Constraints
    - <Any limits, requirements, or boundaries>
    ```
 
@@ -106,15 +106,15 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    Write `tasks/<name>/design.md` with this structure:
 
    ```markdown
-   # 设计：<Task Title>
+   # Design: <Task Title>
 
-   ## 策略
+   ## Strategy
    <High-level approach - what's the overall plan>
 
-   ## 关键决策
+   ## Key Decisions
    - <Decision>: <Rationale>
 
-   ## 风险
+   ## Risk
    - <Risk>: <How to handle it>
    ```
 
@@ -128,18 +128,18 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    Write `tasks/<name>/tasks.md` with this structure:
 
    ```markdown
-   # 任务清单：<Task Title>
+   # Task List: <Task Title>
 
-   ## 前置
+   ## Prerequisites
    - [ ] <Any setup or preparation needed before starting>
 
-   ## 执行
+   ## Execution
    - [ ] <Task 1 - specific and actionable>
    - [ ] <Task 2 - specific and actionable>
    - [ ] <Task 3 - specific and actionable>
    ...
 
-   ## 验证
+   ## Verification
    - [ ] <How to confirm everything was done correctly>
    ```
 
@@ -159,10 +159,10 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    # Check existence and non-empty
    ls -la tasks/<name>/proposal.md tasks/<name>/design.md tasks/<name>/tasks.md tasks/<name>/log.md tasks/<name>/runtime/task-state.json
    # Check required sections exist
-   grep -c "## 目标" tasks/<name>/proposal.md
-   grep -c "## 策略" tasks/<name>/design.md
-   grep -c "## 执行" tasks/<name>/tasks.md
-   grep -c "## 验证" tasks/<name>/tasks.md
+   grep -c "## Goal" tasks/<name>/proposal.md
+   grep -c "## Strategy" tasks/<name>/design.md
+   grep -c "## Execution" tasks/<name>/tasks.md
+   grep -c "## Verification" tasks/<name>/tasks.md
    ```
 
    If any file is missing or missing a required section, recreate/fix it before proceeding.
@@ -269,9 +269,9 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
     ```markdown
     ---
     ## Plan update: YYYY-MM-DD HH:MM
-    **触发：** <what prompted this change>
-    **改动：** <one-line summary of what changed>
-    **修改文件：** <list which files were edited>
+    **Trigger:** <what prompted this change>
+    **Changes:** <one-line summary of what changed>
+    **Files modified:** <list which files were edited>
     ```
 
     The log entry must be written BEFORE showing the confirmation. If log.md doesn't exist (legacy task), create it with a header first.

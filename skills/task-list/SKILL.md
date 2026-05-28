@@ -19,7 +19,7 @@ List all active tasks with progress and verification status, plus recently archi
    ```
 
    For each active task directory found:
-   - Read `tasks/<name>/proposal.md` and extract the first line under `## 目标`
+   - Read `tasks/<name>/proposal.md` and extract the first line under the goal/objective section heading
    - Read `tasks/<name>/tasks.md` and count **top-level** checkbox lines only (lines matching `^- \[.\]` at the start, ignoring indented sub-items):
      - Total = count of `- [ ]` and `- [x]` at top level
      - Completed = count of `- [x]` at top level
