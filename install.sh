@@ -26,6 +26,20 @@ cp -r "$SCRIPT_DIR/skills/task-list" "$CLAUDE_DIR/skills/"
 # Copy commands
 cp "$SCRIPT_DIR/commands/task/"*.md "$CLAUDE_DIR/commands/task/"
 
+# Copy runtime directory
+mkdir -p "$CLAUDE_DIR/task-workflow"
+cp "$SCRIPT_DIR/task-workflow/workflow-runtime.ts" "$CLAUDE_DIR/task-workflow/"
+cp "$SCRIPT_DIR/task-workflow/package.json" "$CLAUDE_DIR/task-workflow/"
+cp "$SCRIPT_DIR/task-workflow/tsconfig.json" "$CLAUDE_DIR/task-workflow/"
+
+# Install runtime dependencies
+echo "Installing runtime dependencies..."
+if (cd "$CLAUDE_DIR/task-workflow" && npm install 2>/dev/null); then
+    echo "  Runtime ready."
+else
+    echo "  Warning: npm install failed. npx tsx will auto-resolve on first use."
+fi
+
 echo ""
 echo "Done. Restart Claude Code for commands to take effect."
 echo ""

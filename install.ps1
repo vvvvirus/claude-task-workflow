@@ -25,6 +25,23 @@ Copy-Item -Recurse -Force "$ScriptDir\skills\task-list" "$ClaudeDir\skills\"
 # Copy commands
 Copy-Item -Force "$ScriptDir\commands\task\*.md" "$ClaudeDir\commands\task\"
 
+# Copy runtime directory (entire task-workflow/ tree excluding node_modules)
+New-Item -ItemType Directory -Force -Path "$ClaudeDir\task-workflow" | Out-Null
+Copy-Item -Force "$ScriptDir\task-workflow\workflow-runtime.ts" "$ClaudeDir\task-workflow\"
+Copy-Item -Force "$ScriptDir\task-workflow\package.json" "$ClaudeDir\task-workflow\"
+Copy-Item -Force "$ScriptDir\task-workflow\tsconfig.json" "$ClaudeDir\task-workflow\"
+
+# Install runtime dependencies
+Write-Host "Installing runtime dependencies..."
+Push-Location "$ClaudeDir\task-workflow"
+try {
+    npm install 2>&1 | Out-Null
+    Write-Host "  Runtime ready."
+} catch {
+    Write-Host "  Warning: npm install failed. npx tsx will auto-resolve on first use."
+}
+Pop-Location
+
 Write-Host ""
 Write-Host "Done. Restart Claude Code for commands to take effect."
 Write-Host ""

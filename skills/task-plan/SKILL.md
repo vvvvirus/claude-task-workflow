@@ -4,308 +4,186 @@ description: Plan a new task or update an existing plan. Use when the user wants
 compatibility: Requires Claude Code and Node.js >= 18 (for workflow-runtime.ts).
 metadata:
   author: custom
-  version: "2.1"
+  version: "2.2"
 ---
 
-Plan a new task or update an existing one. Creates proposal.md, design.md, tasks.md, and runtime state. When the task already exists, enters update mode — shows current state, asks what to change, edits only what changed, and immediately records the revision in log.md.
+Plan a new task or update an existing one. Creates proposal.md, design.md, tasks.md, and runtime state. When the task already exists, enters update mode.
 
-**Input**: The user's request should include a task name (kebab-case) OR a description of what they want to accomplish. For updates, use the existing task name.
+**Input**: Task name (kebab-case) or description. For updates, use the existing task name.
 
 **Steps**
 
-1. **If no clear input provided, ask what they want to do**
+1. **Derive task name** — If no clear input, use AskUserQuestion: "What task do you want to plan?" Derive kebab-case name. Do NOT proceed without understanding the goal.
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
-   > "What task do you want to plan? Describe what you want to accomplish."
+2. **Check for existing task** — If `tasks/<name>/` exists → skip to step 11 (update mode). Otherwise continue.
 
-   From their description, derive a kebab-case name (e.g., "organize photos by date" → `organize-photos`).
+3. **Detect verify commands** — Run `npx tsx ~/.claude/task-workflow/workflow-runtime.ts` to check it works. Auto-detect from package.json/Cargo.toml/go.mod/pyproject.toml. Ask user if they want custom verify commands.
 
-   **IMPORTANT**: Do NOT proceed without understanding what the user wants to do.
-
-2. **Check for existing task with same name**
-
-   Check if `tasks/<name>/` already exists.
-   - If yes → **enter update mode** (skip to step 9). Do NOT offer redirects to other commands. This is the one command for all plan changes.
-   - If no → continue with create mode (step 3).
-
-3. **Detect verification commands**
-
-   Run `npx tsx workflow-runtime.ts` to check it works. Then detect available verify commands:
-   - If `package.json` exists with test/lint scripts → auto-detect
-   - If `Cargo.toml`, `go.mod`, `pyproject.toml` exist → auto-detect
-   - Ask user if they want to add custom verify commands
-
-4. **Create the task directory and initialize log.md**
-
+4. **Create task directory and log.md** —
    ```bash
    mkdir -p tasks/<name>
    ```
-
-   Create `tasks/<name>/log.md` immediately (not deferred to /task:do):
-
+   Create `tasks/<name>/log.md`:
    ```markdown
-   # Execution Log: <task-name>
-
+   # Execution Log: <name>
    ## Overview
    Task created on YYYY-MM-DD.
    ```
 
-   This ensures revision history is never lost — every plan change from this point forward gets recorded.
-
-5. **Initialize runtime state**
-
+5. **Initialize runtime state** —
    ```bash
-   npx tsx workflow-runtime.ts init <name> --tasks="<task1>,<task2>,..."
+   npx tsx ~/.claude/task-workflow/workflow-runtime.ts init <name> --tasks="<t1>,<t2>,..."
    ```
+   For dependencies: `--deps="1:0 2:0,1"` (0-based indices). Format: `task-index:dep-index[,dep-index]`. Out-of-range indices are warned and skipped.
 
-   If tasks have dependencies, use the `--deps` flag with 0-based indices:
-   ```bash
-   npx tsx workflow-runtime.ts init <name> --tasks="Task A,Task B,Task C" --deps="1:0 2:1"
-   ```
-   This means: task at index 1 depends on task at index 0; task at index 2 depends on task at index 1.
-
-   **Dependency format notes:**
-   - Indices are 0-based and validated at init time — out-of-range indices are skipped with a warning
-   - **Important**: if tasks are reordered, dependency indices must be recalculated. When updating a plan (step 14), always regenerate the `--deps` string from the updated task list
-   - Format each entry as `task-index:dep-index[,dep-index]`, separate entries with spaces
-
-   If workflow-runtime.ts is not available, fall back to creating tasks without runtime state and note the limitation.
-
-6. **Create proposal.md**
-
-   Write `tasks/<name>/proposal.md` with this structure:
-
+6. **Create proposal.md** — Write `tasks/<name>/proposal.md`:
    ```markdown
    # <Task Title>
-
-   ## Goal
-   <One sentence describing what success looks like>
-
-   ## Motivation
-   <Why this needs to be done, what problem it solves>
-
-   ## Scope
-
-   ### In Scope
+   ## 目标
+   <One sentence — what success looks like>
+   ## 动机
+   <Why this needs to be done>
+   ## 范围
+   ### 包含
    - <what will be done>
-
-   ### Out of Scope
+   ### 不包含
    - <what will NOT be done>
-
-   ## Constraints
-   - <Any limits, requirements, or boundaries>
+   ## 约束
+   - <limits, requirements, boundaries>
    ```
+   Keep it concise. Scope is the most important section.
 
-   Guidelines:
-   - Keep it concise - this is a brief, not a novel
-   - Scope is the most important section: be specific about boundaries
-   - If unclear, make reasonable assumptions and note them
-
-7. **Create design.md**
-
-   Write `tasks/<name>/design.md` with this structure:
-
+7. **Create design.md** — Write `tasks/<name>/design.md`:
    ```markdown
-   # Design: <Task Title>
-
-   ## Strategy
-   <High-level approach - what's the overall plan>
-
-   ## Key Decisions
+   # 设计：<Task Title>
+   ## 策略
+   <High-level approach>
+   ## 关键决策
    - <Decision>: <Rationale>
-
-   ## Risk
-   - <Risk>: <How to handle it>
+   ## 风险
+   - <Risk>: <Mitigation>
    ```
+   Focus on "how", not "what". Explain WHY for each decision.
 
-   Guidelines:
-   - Focus on the "how", not the "what" (that's in proposal.md)
-   - Key Decisions should explain WHY certain approaches were chosen
-   - If the task is straightforward, keep this short; complexity scales the document
-
-8. **Create tasks.md**
-
-   Write `tasks/<name>/tasks.md` with this structure:
-
+8. **Create tasks.md** — Write `tasks/<name>/tasks.md`:
    ```markdown
-   # Task List: <Task Title>
-
-   ## Prerequisites
-   - [ ] <Any setup or preparation needed before starting>
-
-   ## Execution
-   - [ ] <Task 1 - specific and actionable>
-   - [ ] <Task 2 - specific and actionable>
-   - [ ] <Task 3 - specific and actionable>
+   # 任务清单：<Task Title>
+   ## 前置
+   - [ ] <setup or prep>
+   ## 执行
+   - [ ] <Task 1 — specific, verifiable action>
+   - [ ] <Task 2>
    ...
-
-   ## Verification
-   - [ ] <How to confirm everything was done correctly>
+   ## 验证
+   - [ ] <How to confirm success>
    ```
-
    Guidelines:
-   - Each task must be a single, verifiable action
-   - Use `- [ ]` checkbox format for progress tracking
-   - Order matters: put dependent tasks after their prerequisites
-   - **Dependencies are stored in runtime/task-state.json, NOT as inline text in tasks.md.** When declaring dependencies during planning, pass them to `workflow-runtime.ts init --deps=...` instead.
-   - Verification tasks confirm success, not redo the work
-   - Aim for 3-15 top-level tasks: too few means under-planned, too many means micro-managing
-   - Sub-tasks may be indented under a top-level item, but they do NOT count toward the task total
+   - 3-15 top-level tasks. Dependencies in runtime via `--deps`, NOT inline text.
+   - Each task = single verifiable action. Order by dependency.
+   - Sub-tasks may be indented but don't count toward the total.
 
-9. **Verify all artifacts**
-
-   Use Bash to confirm each file exists, is non-empty, and has required sections:
+9. **Verify all artifacts** —
    ```bash
-   # Check existence and non-empty
    ls -la tasks/<name>/proposal.md tasks/<name>/design.md tasks/<name>/tasks.md tasks/<name>/log.md tasks/<name>/runtime/task-state.json
-   # Check required sections exist
-   grep -c "## Goal" tasks/<name>/proposal.md
-   grep -c "## Strategy" tasks/<name>/design.md
-   grep -c "## Execution" tasks/<name>/tasks.md
-   grep -c "## Verification" tasks/<name>/tasks.md
+   grep -c "## 目标" tasks/<name>/proposal.md
+   grep -c "## 策略" tasks/<name>/design.md
+   grep -c "## 执行" tasks/<name>/tasks.md
+   grep -c "## 验证" tasks/<name>/tasks.md
    ```
 
-   If any file is missing or missing a required section, recreate/fix it before proceeding.
+10. **Run review (internal)** — Review the plan before showing it to the user. Two layers:
 
-10. **Show summary with full plan content** (create mode only — skip to update mode summary for updates)
+    **Layer 1 — Deterministic checks** (execute directly, zero LLM cost):
+    - Task count: 3-15? If <3 → WARN "too few tasks, may be under-planned." If >15 → WARN "too many tasks, consider grouping."
+    - Dep validity: all `deps` IDs exist in the task list? If not → BLOCK "broken dependency reference."
+    - Verify coverage: at least one verify command or verification step? If not → WARN "no verification configured."
+    - Granularity: any task description >50 chars without a verb? If yes → WARN "task may be too vague."
 
+    **Layer 2 — LLM review** (spawn via Agent tool, only if Layer 1 passes):
+    Use Agent with a strict review prompt. Input is `task-state.json` — not markdown text. Output format:
     ```
-    ## Task Planned: <task-name>
+    VERDICT: PASS | WARN | BLOCK
+    COMPLETENESS: <missing pieces or "OK">
+    DEPENDENCIES: <ordering issues or "OK">
+    GRANULARITY: <size issues or "OK">
+    RISKS: <risks or "OK">
+    ```
+    Subagent constraints (hardcoded in prompt):
+    - Only review the task graph structure. Do NOT read proposal.md or design.md.
+    - Do NOT suggest rewrites, alternative approaches, or scope changes.
+    - Do NOT execute anything. You have no tools.
+    - Only report problems — don't fix them.
+    - If everything looks fine, say PASS. Do not invent issues.
 
-    **Goal:** <goal from proposal.md>
+    After review, append result to the summary. WARN does not block `/task:do`; BLOCK does.
 
-    **Strategy:** <strategy from design.md>
-
-    ### Tasks (N total)
-    1. [ ] <task from tasks.md>
-    2. [ ] <task from tasks.md>
+11. **Show summary** —
+    ```
+    ## Task Planned: <name>
+    **Goal:** <from proposal.md>
+    **Strategy:** <from design.md>
+    ### Tasks (N)
+    1. [ ] <task>
     ...
-
-    **Verification:** <N verification items>
-
+    ### Review: <PASS|WARN|BLOCK>
+    <details if not PASS>
     ---
     Ready. Run `/task:do <name>` to start.
     ```
 
-    Guidelines:
-    - List ALL top-level tasks from tasks.md so the user sees the full scope
-    - Show the strategy paragraph verbatim from design.md — this is the user's main chance to catch misaligned approach
-    - Keep it structured: Goal → Strategy → Tasks → call to action
-    - Do NOT elide or shorten task descriptions
-
 ---
 
-### UPDATE MODE (task already exists)
+### UPDATE MODE
 
-11. **Read all existing artifacts**
+12. **Read all existing artifacts** — proposal.md, design.md, tasks.md, log.md. Load runtime: `npx tsx ~/.claude/task-workflow/workflow-runtime.ts status <name>`.
 
-    Read every artifact to understand current state:
-    - `tasks/<name>/proposal.md` — goal, scope, constraints
-    - `tasks/<name>/design.md` — strategy, decisions, risks
-    - `tasks/<name>/tasks.md` — checklist progress
-    - `tasks/<name>/log.md` — revision and session history
-
-    Load runtime state:
-    ```bash
-    npx tsx workflow-runtime.ts status <name>
+13. **Show current state and ask what to change** —
     ```
-    Fall back gracefully if runtime state doesn't exist.
-
-12. **Show current state and ask what to change**
-
-    Display a concise summary:
-    ```
-    ## Update Plan: <task-name>
-
-    **Current goal:** <from proposal.md>
-    **Progress:** N/M top-level tasks complete (preserved)
-    **Scope:** <in-scope summary>
-
+    ## Update Plan: <name>
+    **Goal:** <current>  **Progress:** N/M done
     ### Current tasks
-    1. [x] <task>
-    2. [ ] <task>
-    ...
+    1. [x] <task>  2. [ ] <task>  ...
     ```
+    Ask: "What needs to change?" If user provided changes inline, use those.
 
-    Use the **AskUserQuestion tool** (open-ended) to ask:
-    > "What needs to change? (e.g., 'narrow scope to only PDF files', 'change strategy from manual to scripted', 'add a verification step')"
+14. **Edit only what changed** —
+    | Change | File |
+    |--------|------|
+    | Goal/scope/constraints | proposal.md |
+    | Strategy/decisions/risks | design.md |
+    | Tasks added/removed/reordered | tasks.md + re-init runtime |
 
-    If the user provided changes inline (`/task:plan <name> <changes>`), use that — still show the current state and ask if anything else needs changing.
+    Preserve checkbox states for unchanged tasks. Reset `[x]`→`[ ]` only if the task's core action changed. Flag any task that may need re-doing.
 
-13. **Edit only what changed**
-
-    Identify which artifact(s) need updating based on the user's request:
-
-    | Change type | Edit this file | Example |
-    |------------|---------------|---------|
-    | Goal, scope, constraints changed | `proposal.md` | "Only handle PDFs, not images" |
-    | Strategy, approach, decisions changed | `design.md` | "Use a Python script instead of manual bash" |
-    | Tasks added, removed, reordered | `tasks.md` + update runtime state | "Add a backup step before moving files" |
-
-    Editing rules:
-    - Modify ONLY the sections relevant to the change. Leave everything else verbatim.
-    - If changing `tasks.md`: preserve checkbox states for tasks that are NOT being modified.
-    - **When to reset `[x]` → `[ ]`**: if the rewritten task's **core action** (main verb + object) differs from the original, reset it. If only details, constraints, or ordering changed, keep `[x]`.
-    - If a completed task's meaning changed significantly, flag it: "Task X was done, but the description changed — may need re-doing."
-    - Do NOT rewrite the entire file. Use targeted edits.
-
-14. **Sync runtime state**
-
-    If the task list or dependencies changed, reinitialize the runtime state to match:
+15. **Sync runtime state** — Re-init with updated task list, then restore progress for completed tasks:
     ```bash
-    npx tsx workflow-runtime.ts init <name> --tasks="<updated task list>"
-    ```
-    Then restore progress for completed tasks:
-    ```bash
-    npx tsx workflow-runtime.ts step-done <name> <index>  # for each completed task
+    npx tsx ~/.claude/task-workflow/workflow-runtime.ts init <name> --tasks="<updated>" [--deps="..."]
+    npx tsx ~/.claude/task-workflow/workflow-runtime.ts step-done <name> <index>  # per completed task
     ```
 
-    If only the goal/strategy changed (no task list changes), skip this step.
-
-15. **Record the change in log.md IMMEDIATELY**
-
-    This is mandatory. Do NOT defer to session end. After every plan edit, immediately append to `tasks/<name>/log.md`:
-
+16. **Record change in log.md immediately** —
     ```markdown
     ---
     ## Plan update: YYYY-MM-DD HH:MM
-    **Trigger:** <what prompted this change>
-    **Changes:** <one-line summary of what changed>
-    **Files modified:** <list which files were edited>
+    **触发：** <reason>
+    **改动：** <summary>
+    **修改文件：** <file list>
     ```
 
-    The log entry must be written BEFORE showing the confirmation. If log.md doesn't exist (legacy task), create it with a header first.
-
-    Also write a checkpoint if runtime is available:
-    ```bash
-    npx tsx workflow-runtime.ts checkpoint <name> "plan-update-<summary>"
+17. **Confirm** —
     ```
-
-16. **Confirm**
-
-    ```
-    ## Plan updated: <task-name>
-
-    **Files changed:**
-    - <file> — <what changed>
-    - <file> — <what changed>
-
-    **Preserved:** N/M task completions, session history (log.md)
-
+    ## Plan updated: <name>
+    **Files changed:** <list>
+    **Preserved:** N/M completions, log.md history
     Resume with `/task:do <name>`.
     ```
 
 **Guardrails**
-- Create ALL artifacts (proposal, design, tasks, log, runtime state); don't skip any
-- **NO GUESSING**: If any aspect of the goal, scope, constraints, or approach is unclear, STOP and use AskUserQuestion to clarify. Do NOT make assumptions about what the user wants.
-- If context is partially unclear but has an obvious reasonable default, state the assumption explicitly in the artifact and flag it for user review
-- Task names use kebab-case, lowercase, hyphen-separated
-- Each checkbox item in tasks.md must be a concrete action, not a vague goal
-- Verify each artifact file exists after writing before proceeding to next
-- If the task is trivial (1-2 steps), suggest it may not need the full workflow
-- Do NOT include speculation or filler in artifacts - every line should inform action
-- **Dependencies go in runtime/task-state.json via --deps flag, NOT in tasks.md.**
-- **LOG.MD DISCIPLINE**: Create log.md during initial planning. After every plan update, immediately append to log.md — do not wait for session end. This is non-negotiable.
-- In update mode, only edit files that actually need changing. Preserve completed checkboxes.
-- If the user's requested change is unclear, ask for clarification — do NOT guess.
-- No distinction between "small" and "large" plan changes. All edits follow the same flow: edit files + record log.
+- **Language**: This skill file is English only. Plan artifacts (proposal/design/tasks/log) use the user's language — section headers in templates above are Chinese because the user communicates in Chinese. When writing plan files, match the user's language. Do NOT insert Chinese into this skill's instruction text.
+- Create ALL artifacts; don't skip any.
+- If the goal/scope/constraints/approach is unclear, STOP and use AskUserQuestion.
+- State assumptions explicitly in the artifact.
+- Task names: kebab-case. Each checkbox = concrete action.
+- Dependencies in runtime/task-state.json, NOT tasks.md.
+- Write log.md during planning. After every update, append to log.md immediately.
+- In update mode, only edit files that need changing. Preserve completed checkboxes.
