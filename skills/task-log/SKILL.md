@@ -54,6 +54,7 @@ Append an auto-generated checkpoint to a task's log.md, with optional user notes
 
 **Guardrails**
 - **Language**: English only. Do not insert Chinese or mix languages.
+- If delta detection, progress state, or user intent is ambiguous, STOP and use AskUserQuestion. Never assume.
 - Done section = delta since last checkpoint only, not all-time.
 - If no progress, still write entry as "still working" marker.
 - Pending list = all remaining, not just new ones.

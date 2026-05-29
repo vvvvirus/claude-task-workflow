@@ -55,6 +55,7 @@ Archive a completed task. Checks verification status via the task-workflow runti
 
 **Guardrails**
 - **Language**: English only. Do not insert Chinese or mix languages.
+- If the archive target, completion status, or user intent is unclear, STOP and use AskUserQuestion. Never assume.
 - Check verification before archiving — warn but don't block.
 - Show clear summary. Significant plan deviations → note them.
 - Date prefix = archive date (not creation date).
