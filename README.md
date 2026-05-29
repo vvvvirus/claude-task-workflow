@@ -18,7 +18,7 @@ Not a code framework. No dependencies, no config, no CLI. Six slash commands, fi
 ```
 /task:plan "organize 5000 photos by year and rename them"
 
-  Creates:  tasks/organize-photos/
+  Creates:  task-workflow/tasks/organize-photos/
             ├── proposal.md    ← What & why. Goal, scope, constraints.
             ├── design.md      ← How. Strategy, key decisions, risks.
             ├── tasks.md       ← Step-by-step checklist. Each line one action.
@@ -56,7 +56,7 @@ Not a code framework. No dependencies, no config, no CLI. Six slash commands, fi
 /task:done organize-photos
 
   Appends completion summary to proposal.md.
-  Moves to tasks/archive/2026-05-29-organize-photos/.
+  Moves to task-workflow/tasks/archive/2026-05-29-organize-photos/.
 
 /task:verify organize-photos
 
@@ -110,7 +110,10 @@ claude-task-workflow/
 │   ├── task-done/SKILL.md
 │   ├── task-list/SKILL.md
 │   └── task-log/SKILL.md
-└── task-workflow/                      # Runtime (installed to ~/.claude/)
+└── task-workflow/                      # Runtime + tasks (installed to ~/.claude/)
+    ├── tasks/                          # Active + archived task plans
+    │   ├── <active-task>/
+    │   └── archive/
     ├── workflow-runtime.ts             # DAG, checkpoint, verify engine
     ├── package.json
     └── tsconfig.json
@@ -153,13 +156,17 @@ Copies skills to `~/.claude/skills/`, commands to `~/.claude/commands/task/`, an
 
 ```
 your-project/
-├── tasks/                            # Active
-│   └── organize-photos/
-│       ├── proposal.md
-│       ├── design.md
-│       ├── tasks.md
-│       ├── log.md
-│       └── runtime/
-└── tasks/archive/                    # Done
-    └── 2026-05-29-organize-photos/
+└── task-workflow/
+    ├── tasks/                            # Active
+    │   └── organize-photos/
+    │       ├── proposal.md
+    │       ├── design.md
+    │       ├── tasks.md
+    │       ├── log.md
+    │       └── runtime/
+    ├── tasks/archive/                    # Done
+    │   └── 2026-05-29-organize-photos/
+    ├── workflow-runtime.ts
+    ├── package.json
+    └── tsconfig.json
 ```

@@ -63,7 +63,7 @@ interface KnowledgeGraph {
 // ── Paths ────────────────────────────────────────────────────
 
 const PROJECT_ROOT = process.cwd();
-const TASKS_DIR = join(PROJECT_ROOT, "tasks");
+const TASKS_DIR = join(PROJECT_ROOT, "task-workflow", "tasks");
 const KG_PATH = join(PROJECT_ROOT, "runtime", "knowledge-graph.json");
 
 // ── Helpers ──────────────────────────────────────────────────

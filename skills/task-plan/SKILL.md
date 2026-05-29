@@ -15,15 +15,15 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
 
 1. **Derive task name** — If no clear input, use AskUserQuestion: "What task do you want to plan?" Derive kebab-case name. Do NOT proceed without understanding the goal.
 
-2. **Check for existing task** — If `tasks/<name>/` exists → skip to step 11 (update mode). Otherwise continue.
+2. **Check for existing task** — If `task-workflow/tasks/<name>/` exists → skip to step 11 (update mode). Otherwise continue.
 
 3. **Detect verify commands** — Run `npx tsx ~/.claude/task-workflow/workflow-runtime.ts` to check it works. Auto-detect from package.json/Cargo.toml/go.mod/pyproject.toml. Ask user if they want custom verify commands.
 
 4. **Create task directory and log.md** —
    ```bash
-   mkdir -p tasks/<name>
+   mkdir -p task-workflow/tasks/<name>
    ```
-   Create `tasks/<name>/log.md`:
+   Create `task-workflow/tasks/<name>/log.md`:
    ```markdown
    # Execution Log: <name>
    ## Overview
@@ -36,7 +36,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```
    For dependencies: `--deps="1:0 2:0,1"` (0-based indices). Format: `task-index:dep-index[,dep-index]`. Out-of-range indices are warned and skipped.
 
-6. **Create proposal.md** — Write `tasks/<name>/proposal.md`:
+6. **Create proposal.md** — Write `task-workflow/tasks/<name>/proposal.md`:
    ```markdown
    # <Task Title>
    ## 目标
@@ -53,7 +53,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```
    Keep it concise. Scope is the most important section.
 
-7. **Create design.md** — Write `tasks/<name>/design.md`:
+7. **Create design.md** — Write `task-workflow/tasks/<name>/design.md`:
    ```markdown
    # 设计：<Task Title>
    ## 策略
@@ -65,7 +65,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
    ```
    Focus on "how", not "what". Explain WHY for each decision.
 
-8. **Create tasks.md** — Write `tasks/<name>/tasks.md`:
+8. **Create tasks.md** — Write `task-workflow/tasks/<name>/tasks.md`:
    ```markdown
    # 任务清单：<Task Title>
    ## 前置
@@ -84,11 +84,11 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
 
 9. **Verify all artifacts** —
    ```bash
-   ls -la tasks/<name>/proposal.md tasks/<name>/design.md tasks/<name>/tasks.md tasks/<name>/log.md tasks/<name>/runtime/task-state.json
-   grep -c "## 目标" tasks/<name>/proposal.md
-   grep -c "## 策略" tasks/<name>/design.md
-   grep -c "## 执行" tasks/<name>/tasks.md
-   grep -c "## 验证" tasks/<name>/tasks.md
+   ls -la task-workflow/tasks/<name>/proposal.md task-workflow/tasks/<name>/design.md task-workflow/tasks/<name>/tasks.md task-workflow/tasks/<name>/log.md task-workflow/tasks/<name>/runtime/task-state.json
+   grep -c "## 目标" task-workflow/tasks/<name>/proposal.md
+   grep -c "## 策略" task-workflow/tasks/<name>/design.md
+   grep -c "## 执行" task-workflow/tasks/<name>/tasks.md
+   grep -c "## 验证" task-workflow/tasks/<name>/tasks.md
    ```
 
 10. **Run review (internal)** — Review the plan before showing it to the user. Two layers:
@@ -179,7 +179,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
     ```
 
 **Guardrails**
-- **Language**: This skill file is English only. Plan artifacts (proposal/design/tasks/log) use the user's language — section headers in templates above are Chinese because the user communicates in Chinese. When writing plan files, match the user's language. Do NOT insert Chinese into this skill's instruction text.
+- **Language**: This skill file is English only. Plan artifacts (proposal/design/task-workflow/tasks/log) use the user's language — section headers in templates above are Chinese because the user communicates in Chinese. When writing plan files, match the user's language. Do NOT insert Chinese into this skill's instruction text.
 - Create ALL artifacts; don't skip any.
 - If the goal/scope/constraints/approach is unclear, STOP and use AskUserQuestion.
 - State assumptions explicitly in the artifact.

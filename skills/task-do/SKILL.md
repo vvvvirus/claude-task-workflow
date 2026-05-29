@@ -13,7 +13,7 @@ Execute tasks from a planned task. Uses the task-workflow runtime for DAG-based 
 
 **Steps**
 
-1. **Select and validate task** — Announce "Using task: <name>". Verify `tasks/<name>/` exists with `tasks.md`.
+1. **Select and validate task** — Announce "Using task: <name>". Verify `task-workflow/tasks/<name>/` exists with `tasks.md`.
 
 2. **Read all context files** — proposal.md, design.md, tasks.md, log.md.
 

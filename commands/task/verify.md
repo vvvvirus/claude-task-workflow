@@ -13,9 +13,9 @@ Run verification for a task using workflow-runtime.ts. Detects project type, run
 
 1. **Select the task**
 
-   If a task name is provided, use it. Otherwise list active tasks from `tasks/` and use the **AskUserQuestion tool** to let the user select.
+   If a task name is provided, use it. Otherwise list active tasks from `task-workflow/tasks/` and use the **AskUserQuestion tool** to let the user select.
 
-   Verify `tasks/<name>/` exists. If not, show error with available tasks.
+   Verify `task-workflow/tasks/<name>/` exists. If not, show error with available tasks.
 
 2. **Run the verification**
 

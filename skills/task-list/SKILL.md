@@ -11,7 +11,7 @@ List all active tasks with progress and verification status, plus recently archi
 
 **Steps**
 
-1. **List active tasks** — `ls -d tasks/*/ 2>/dev/null | grep -v archive`. For each:
+1. **List active tasks** — `ls -d task-workflow/tasks/*/ 2>/dev/null | grep -v archive`. For each:
    - Extract goal from proposal.md (first line under goal/objective heading)
    - Count top-level checkboxes in tasks.md: total = `- [ ]` + `- [x]`, done = `- [x]`
 
@@ -29,7 +29,7 @@ List all active tasks with progress and verification status, plus recently archi
    | <name> | <goal> | N/M done | <status> |
    ```
 
-4. **List recent archives** — `ls -d tasks/archive/*/ 2>/dev/null | tail -10`. For each: parse date from dir name, extract `Result:` from proposal.md's Completion Summary.
+4. **List recent archives** — `ls -d task-workflow/tasks/archive/*/ 2>/dev/null | tail -10`. For each: parse date from dir name, extract `Result:` from proposal.md's Completion Summary.
 
 5. **Display summary** —
    ```

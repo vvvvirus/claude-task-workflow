@@ -13,7 +13,7 @@ Append an auto-generated checkpoint to a task's log.md, with optional user notes
 
 **Steps**
 
-1. **Select task** — Announce "Using task: <name>". Verify `tasks/<name>/` exists.
+1. **Select task** — Announce "Using task: <name>". Verify `task-workflow/tasks/<name>/` exists.
 
 2. **Read all state** — proposal.md, design.md, tasks.md (parse top-level checkboxes), log.md. Try runtime: `npx tsx ~/.claude/task-workflow/workflow-runtime.ts status <name>` and `npx tsx ~/.claude/task-workflow/workflow-runtime.ts checkpoints <name>`. Graceful fallback if missing.
 
@@ -23,7 +23,7 @@ Append an auto-generated checkpoint to a task's log.md, with optional user notes
    - Plan changes: proposal.md/design.md content vs last log description
    - Unresolved blockers: last entry's blocker still present?
 
-4. **Generate checkpoint entry** — Append to `tasks/<name>/log.md`:
+4. **Generate checkpoint entry** — Append to `task-workflow/tasks/<name>/log.md`:
    ```markdown
    ---
    ## Checkpoint: YYYY-MM-DD HH:MM
@@ -48,7 +48,7 @@ Append an auto-generated checkpoint to a task's log.md, with optional user notes
 6. **Confirm** —
    ```
    ## Checkpoint recorded
-   **Task:** <name>  **Log:** tasks/<name>/log.md  **Progress:** N/M
+   **Task:** <name>  **Log:** task-workflow/tasks/<name>/log.md  **Progress:** N/M
    Resume with `/task:do <name>`.
    ```
 

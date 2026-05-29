@@ -16,5 +16,5 @@ Use the **Skill tool** to invoke `task-done` with the task name as context.
 The skill will:
 1. Check for incomplete tasks and warn
 2. Append completion summary to proposal.md
-3. Move `tasks/<name>/` to `tasks/archive/YYYY-MM-DD-<name>/`
+3. Move `task-workflow/tasks/<name>/` to `task-workflow/tasks/archive/YYYY-MM-DD-<name>/`
 4. Display archive summary

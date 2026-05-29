@@ -13,7 +13,7 @@ Archive a completed task. Checks verification status via the task-workflow runti
 
 **Steps**
 
-1. **Select task** — Announce "Using task: <name>". Verify `tasks/<name>/` exists.
+1. **Select task** — Announce "Using task: <name>". Verify `task-workflow/tasks/<name>/` exists.
 
 2. **Check completion** —
    ```bash
@@ -40,15 +40,15 @@ Archive a completed task. Checks verification status via the task-workflow runti
 
 5. **Archive** —
    ```bash
-   mkdir -p tasks/archive
-   mv tasks/<name> tasks/archive/YYYY-MM-DD-<name>
+   mkdir -p task-workflow/tasks/archive
+   mv task-workflow/tasks/<name> task-workflow/tasks/archive/YYYY-MM-DD-<name>
    ```
    If target exists, append `-2`, `-3`, etc.
 
 6. **Display** —
    ```
    ## Archive Complete
-   **Task:** <name>  **Archived to:** tasks/archive/YYYY-MM-DD-<name>/
+   **Task:** <name>  **Archived to:** task-workflow/tasks/archive/YYYY-MM-DD-<name>/
    **Result:** <outcome>  **Verification:** <status>
    ```
    With warnings: show incomplete tasks and verification issues.
