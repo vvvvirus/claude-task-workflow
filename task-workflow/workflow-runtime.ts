@@ -24,6 +24,7 @@ interface CheckState {
 interface VerifyCommand {
   name: "tests" | "lint" | "typecheck" | "build" | "custom";
   command: string;
+  cwd?: string; // subdirectory relative to PROJECT_ROOT
 }
 
 interface TaskState {
@@ -127,44 +128,70 @@ function detectVerifyCommands(): VerifyCommand[] {
   const cmds: VerifyCommand[] = [];
   const seen = new Set<string>();
 
-  function add(name: string, command: string): void {
+  function add(name: string, command: string, subdir?: string): void {
     if (seen.has(name)) return; // first project type wins
     seen.add(name);
-    cmds.push({ name, command });
+    cmds.push({ name, command, cwd: subdir });
   }
 
-  if (existsSync(join(cwd, "package.json"))) {
-    try {
-      const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
-      const scripts = pkg.scripts || {};
-      if (scripts.test) add("tests", "npm test");
-      if (scripts.lint) add("lint", "npm run lint");
-      if (scripts.typecheck || scripts.tsc) {
-        add("typecheck", `npm run ${scripts.typecheck ? "typecheck" : "tsc"}`);
+  function scan(dir: string, subdir?: string): boolean {
+    let found = false;
+
+    if (existsSync(join(dir, "package.json"))) {
+      found = true;
+      try {
+        const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf-8"));
+        const scripts = pkg.scripts || {};
+        if (scripts.test) add("tests", "npm test", subdir);
+        if (scripts.lint) add("lint", "npm run lint", subdir);
+        if (scripts.typecheck || scripts.tsc) {
+          add("typecheck", `npm run ${scripts.typecheck ? "typecheck" : "tsc"}`, subdir);
+        }
+        if (scripts.build) add("build", "npm run build", subdir);
+      } catch {
+        console.error(JSON.stringify({ warning: "Failed to parse package.json, skipping JS/TS verify commands" }));
       }
-      if (scripts.build) add("build", "npm run build");
-    } catch {
-      console.error(JSON.stringify({ warning: "Failed to parse package.json, skipping JS/TS verify commands" }));
     }
-  }
 
-  if (existsSync(join(cwd, "Cargo.toml"))) {
-    add("tests", "cargo test");
-    add("lint", "cargo clippy");
-    add("typecheck", "cargo check");
-  }
-
-  if (existsSync(join(cwd, "pyproject.toml")) || existsSync(join(cwd, "setup.py"))) {
-    add("tests", "pytest");
-    if (existsSync(join(cwd, "pyproject.toml"))) {
-      add("lint", "ruff check .");
+    if (existsSync(join(dir, "Cargo.toml"))) {
+      found = true;
+      add("tests", subdir ? `cargo test --manifest-path ${subdir}/Cargo.toml` : "cargo test", subdir);
+      add("lint", subdir ? `cargo clippy --manifest-path ${subdir}/Cargo.toml` : "cargo clippy", subdir);
+      add("typecheck", subdir ? `cargo check --manifest-path ${subdir}/Cargo.toml` : "cargo check", subdir);
     }
+
+    if (existsSync(join(dir, "pyproject.toml")) || existsSync(join(dir, "setup.py"))) {
+      found = true;
+      add("tests", "pytest", subdir);
+      if (existsSync(join(dir, "pyproject.toml"))) {
+        add("lint", "ruff check .", subdir);
+      }
+    }
+
+    if (existsSync(join(dir, "go.mod"))) {
+      found = true;
+      add("tests", subdir ? `cd ${subdir} && go test ./...` : "go test ./...", subdir);
+      add("lint", subdir ? `cd ${subdir} && golangci-lint run` : "golangci-lint run", subdir);
+      add("typecheck", subdir ? `cd ${subdir} && go vet ./...` : "go vet ./...", subdir);
+    }
+
+    return found;
   }
 
-  if (existsSync(join(cwd, "go.mod"))) {
-    add("tests", "go test ./...");
-    add("lint", "golangci-lint run");
-    add("typecheck", "go vet ./...");
+  // Scan cwd first
+  scan(cwd);
+
+  // Then scan immediate subdirectories (1 level deep)
+  try {
+    const entries = readdirSync(cwd, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name.startsWith(".")) continue;
+      if (entry.name === "node_modules") continue;
+      scan(join(cwd, entry.name), entry.name);
+    }
+  } catch {
+    // Permission errors — ignore
   }
 
   return cmds;
@@ -172,9 +199,10 @@ function detectVerifyCommands(): VerifyCommand[] {
 
 function runVerify(cmd: VerifyCommand): { passed: boolean; output: string } {
   const timeout = parseInt(process.env.VERIFY_TIMEOUT || "0") || 120_000;
+  const workDir = cmd.cwd ? join(PROJECT_ROOT, cmd.cwd) : PROJECT_ROOT;
   try {
     const output = execSync(cmd.command, {
-      cwd: PROJECT_ROOT,
+      cwd: workDir,
       timeout,
       encoding: "utf-8",
       stdio: "pipe",
@@ -352,7 +380,7 @@ function cmdVerify(name: string): void {
   const cmds = state.verifyCommands || [];
 
   if (cmds.length === 0) {
-    ok({ passed: true, checks: {}, message: "No verify commands configured" });
+    ok({ passed: false, checks: {}, message: "No verify commands configured — run /task:plan to add them" });
     return;
   }
 

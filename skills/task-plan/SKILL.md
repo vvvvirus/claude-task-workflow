@@ -17,7 +17,7 @@ Plan a new task or update an existing one. Creates proposal.md, design.md, tasks
 
 2. **Check for existing task** — If `task-workflow/tasks/<name>/` exists → skip to step 11 (update mode). Otherwise continue.
 
-3. **Detect verify commands** — Run `npx tsx ~/.claude/task-workflow/workflow-runtime.ts` to check it works. Auto-detect from package.json/Cargo.toml/go.mod/pyproject.toml. Ask user if they want custom verify commands.
+3. **Detect verify commands** — Run `npx tsx ~/.claude/task-workflow/workflow-runtime.ts` to verify runtime works. Detection is automatic during `init` (step 5) — `detectVerifyCommands()` scans cwd + immediate subdirectories for package.json/Cargo.toml/go.mod/pyproject.toml. After `init`, read `task-state.json` to see what was detected. If zero commands found or user wants custom checks, use AskUserQuestion to collect them.
 
 4. **Create task directory and log.md** —
    ```bash

@@ -17,7 +17,7 @@ Execute tasks from a planned task. Uses the task-workflow runtime for DAG-based 
 
 2. **Read all context files** — proposal.md, design.md, tasks.md, log.md.
 
-3. **Load runtime state** — `npx tsx ~/.claude/task-workflow/workflow-runtime.ts status <name>`. If `_runnable.done: true`, skip to step 10a. Fall back to markdown-only if no runtime.
+3. **Load runtime state** — First verify runtime is available: `test -f ~/.claude/task-workflow/workflow-runtime.ts`. If missing, skip all runtime calls, use markdown-only mode. Otherwise `npx tsx ~/.claude/task-workflow/workflow-runtime.ts status <name>`. If `_runnable.done: true`, skip to step 10a.
 
 4. **Check for compact recovery** — `npx tsx ~/.claude/task-workflow/workflow-runtime.ts next-checkpoint <name>` + status. Recovery logic:
    - Tasks with `status: "in_progress"` in task-state.json → interrupted by compact.
@@ -55,6 +55,7 @@ Execute tasks from a planned task. Uses the task-workflow runtime for DAG-based 
       ```bash
       npx tsx ~/.claude/task-workflow/workflow-runtime.ts checkpoint <name> "starting-task-<N>" --files="<known-files>"
       ```
+      If checkpoint fails (non-zero exit), log warning but **do not block** — continue to step 7e. Checkpoint failure must never stop task execution. If runtime is completely unavailable, skip silently and fall back to markdown-only mode.
 
    e. Execute the task. After success:
       - Mark runtime done: `npx tsx ~/.claude/task-workflow/workflow-runtime.ts step-done <name> <index>`
@@ -65,7 +66,7 @@ Execute tasks from a planned task. Uses the task-workflow runtime for DAG-based 
 
    **Pause if:** task ambiguous → AskUserQuestion; design issue → suggest `/task:plan <name>`; error/blocker → report; user interrupts; manual action needed.
 
-   **Fallback (no runtime):** Parse tasks.md checkboxes directly. Still use TaskCreate/TaskUpdate for native UI.
+   **Fallback (no runtime):** Parse tasks.md checkboxes directly. Still use TaskCreate/TaskUpdate for native UI. Skip checkpoint writes and verification.
 
 8. **Run verification** — `npx tsx ~/.claude/task-workflow/workflow-runtime.ts verify <name>`. Report results.
 
